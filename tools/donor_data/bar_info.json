@@ -1,0 +1,9 @@
+{
+  "base_address": "0x0000000082400000",
+  "base_address_int": 2185232384,
+  "is_64bit": true,
+  "is_prefetchable": false,
+  "type": "Memory",
+  "estimated_size": 16384,
+  "estimated_size_desc": "16KB"
+}

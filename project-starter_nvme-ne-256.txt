@@ -1,0 +1,42 @@
+nvme project
+
+new project. i have started this session in the project folder with 1 fpga board variant to produce firmware for. this is the CaptainDMA 75t484_x1. 
+
+objective is to take the stock pcileech test FPGA firmware (supplied in the board variant folders within this project hierarchy) that currently exhibits itself as an ethernet controller and modify the Xilinx ethernet controller emulation portion to resemble a different device on the target pc while maintaining the pcileech functionality (ftdi/usb) page reads from reader pc for direct memory access. the emulation will need to be as close as possible to the real device. i have a pcie donor device to use and it is currently in the target PC. it is in-house driver support (Microsoft).
+
+target system is windows 10 on msi z690 intel motherboard. firmware should work or bypass vt-d and memory integrity since they are enabled (this is not negotiable). reader pc is also on windows device, so any tooling or discovery must always be windows capable. anything that can be done on this session pc (reader pc) should be done by claude. there is an active pcileech device that can be used to extract much of the information required without having to action things on the target pc until firmware testing. iommu can be disabled temporarily on the target pc should it become necessary for data collection or testing. just let me know which tasks need that to be done.
+
+donor device (located in target machine already, ready for deeper config space and attribute analysis from reader pc) is a standard nvme drive. in this case an ne-256 brand 2280 form factor. it is currently not formatted, but the device details are here:
+
+Device SCSI\Disk&Ven_NVMe&Prod_NE-256_2280\5&337ff6f&0&000000 was configured.
+
+Driver Name: disk.inf
+Class Guid: {4d36e967-e325-11ce-bfc1-08002be10318}
+Driver Date: 06/21/2006
+Driver Version: 10.0.19041.4597
+Driver Provider: Microsoft
+Driver Section: disk_install.NT
+Driver Rank: 0xFF0007
+Matching Device Id: GenDisk
+Outranked Drivers: 
+Device Updated: false
+Parent Device: PCI\VEN_126F&DEV_2263&SUBSYS_2263126F&REV_03\4&27f41953&0&00E4
+
+Objective of the project is that it should perfectly present as a fully implemented NVMe controller emulation and interrupts, and the SSD disk is displayed and works properly, just like a real device.
+
+One point to note is that our emulation will show SSD a capacity of 256 GB, only a small portion is actually readable and writable (about 16MB) through the firmware emulation. In addition, data is not preserved after power loss; upon reboot, it automatically loads a preset .txt file with a small amount of random data for realism behavior.
+
+one-to-one configuration space with modified ip core (this is important!, not basic Xilinx) with the donor, some use of shadow config + full writemask.
+firmware response is captured by real device without trick.
+interrupts with valid isr count typical of a real device/disk
+
+A success for this project is full controller & nvme disk enumeration as well as full memory page reads (32gb) even with iommu on (we need to ignore the common rules here, just bypass memory limitations)
+
+tools available on reader pc: ghidra (for any reversing, like driver analysis, which I think could yielded much pertinent information), python and pcileech suite. 
+tools available on target pc: telescan pe and rw-everything. 
+run scripts and tools (donor extraction/behavior) where possible from reader pc, as pcileech dma is active.  any tooling from target pc can be done but should be last resort.
+
+try to use multiple agents and deep thinking when possible. play out any edits entirely before building the firmware. each build takes 15 minutes and it adds up, so be super thorough. reference project_dogma.txt. don't take shortcuts - no quick win edits. think it through. 
+
+got it? where do we start? device info and config space extraction? driver reversal? plan it
+

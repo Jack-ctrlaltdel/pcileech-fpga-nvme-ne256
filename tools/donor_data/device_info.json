@@ -1,0 +1,13 @@
+﻿{
+    "BAR0_Address":  null,
+    "ECAM_Address":  "0xC0500000",
+    "Bus":  5,
+    "BAR0Extracted":  false,
+    "Function":  0,
+    "ConfigExtracted":  false,
+    "BAR0_Size":  null,
+    "Device":  0,
+    "FriendlyName":  "Standard NVM Express Controller",
+    "InstanceId":  "PCI\\VEN_126F\u0026DEV_2263\u0026SUBSYS_2263126F\u0026REV_03\\4\u002627F41953\u00260\u002600E4",
+    "BDF":  "05:00.0"
+}

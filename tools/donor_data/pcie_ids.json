@@ -1,0 +1,8 @@
+{
+    "VendorID": "0x126F",
+    "DeviceID": "0x2263",
+    "RevisionID": "0x03",
+    "SubsysVenID": "0x126F",
+    "SubsystemID": "0x2263",
+    "ClassCode": "0x010802"
+}

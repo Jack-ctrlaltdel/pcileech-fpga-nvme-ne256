@@ -1,0 +1,32 @@
+{
+  "NSZE": 500118192,
+  "NCAP": 500118192,
+  "NUSE": 500118192,
+  "NSFEAT": 0,
+  "NLBAF": 0,
+  "FLBAS": 0,
+  "FLBAS_format_index": 0,
+  "FLBAS_metadata_in_extended": false,
+  "MC": 0,
+  "DPC": 0,
+  "DPS": 0,
+  "NMIC": 0,
+  "RESCAP": 0,
+  "FPI": 0,
+  "NGUID": "00000000000000000000000000000000",
+  "EUI64": "0000000000000000",
+  "LBA_formats": [
+    {
+      "index": 0,
+      "metadata_size": 0,
+      "lba_data_size_log2": 9,
+      "lba_data_size_bytes": 512,
+      "relative_performance": 0,
+      "rp_desc": "Best"
+    }
+  ],
+  "LBASize": 512,
+  "capacity_bytes": 256060514304,
+  "capacity_GB": 256.06,
+  "capacity_GiB": 238.47
+}

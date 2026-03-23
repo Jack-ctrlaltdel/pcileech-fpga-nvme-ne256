@@ -1,0 +1,121 @@
+{
+  "table_size": 16,
+  "table_offset": "0x2000",
+  "table_BIR": 0,
+  "pba_offset": "0x2100",
+  "pba_BIR": 0,
+  "entries": [
+    {
+      "index": 0,
+      "msg_address": "0x00000000FEE00510",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 1,
+      "msg_address": "0x00000000FEE004F0",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 2,
+      "msg_address": "0x00000000FEE004D0",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 3,
+      "msg_address": "0x00000000FEE004B0",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 4,
+      "msg_address": "0x00000000FEE00490",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 5,
+      "msg_address": "0x00000000FEE00470",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 6,
+      "msg_address": "0x00000000FEE00450",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 7,
+      "msg_address": "0x00000000FEE00430",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 8,
+      "msg_address": "0x00000000FEE00410",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 9,
+      "msg_address": "0x00000000FEE003F0",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 10,
+      "msg_address": "0x00000000FEE003D0",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 11,
+      "msg_address": "0x00000000FEE003B0",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 12,
+      "msg_address": "0x00000000FEE00390",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 13,
+      "msg_address": "0x00000000FEE00370",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 14,
+      "msg_address": "0x00000000FEE00350",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    },
+    {
+      "index": 15,
+      "msg_address": "0x00000000FEE00330",
+      "msg_data": "0x00000000",
+      "vector_control": "0x00000000",
+      "masked": false
+    }
+  ]
+}
