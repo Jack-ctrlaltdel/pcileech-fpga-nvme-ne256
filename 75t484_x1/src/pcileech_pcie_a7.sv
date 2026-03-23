@@ -62,8 +62,21 @@ module pcileech_pcie_a7(
     wire pcie_clk_c;
     wire clk_pcie;
     wire rst_pcie_user;
-    wire rst_subsys = rst || rst_pcie_user || dfifo_pcie.pcie_rst_subsys;
     wire rst_pcie = rst || ~pcie_perst_n || dfifo_pcie.pcie_rst_core;
+
+    // Link-up gating: hold subsystem in reset until PCIe link is trained
+    // and stable. A post-link-up delay prevents the root complex from seeing
+    // responses before the endpoint is fully ready.
+    reg [7:0] lnk_up_delay = 8'hFF;
+    wire      lnk_up_stable = user_lnk_up && (lnk_up_delay == 8'h00);
+    always @(posedge clk_pcie) begin
+        if (!user_lnk_up)
+            lnk_up_delay <= 8'hFF;       // ~4us holdoff at 62.5 MHz
+        else if (lnk_up_delay > 0)
+            lnk_up_delay <= lnk_up_delay - 1;
+    end
+
+    wire rst_subsys = rst || rst_pcie_user || dfifo_pcie.pcie_rst_subsys || ~lnk_up_stable;
        
     // Buffer for differential system clock
     IBUFDS_GTE2 refclk_ibuf (.O(pcie_clk_c), .ODIV2(), .I(pcie_clk_p), .CEB(1'b0), .IB(pcie_clk_n));
