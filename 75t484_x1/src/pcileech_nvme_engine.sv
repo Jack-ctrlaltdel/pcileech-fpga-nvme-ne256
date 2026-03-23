@@ -115,8 +115,8 @@ module pcileech_nvme_engine(
     (* ram_style = "distributed" *) reg [31:0] identify_ctrl_rom [0:1023];
     (* ram_style = "distributed" *) reg [31:0] identify_ns_rom   [0:1023];
 
-    initial $readmemh("../ip/nvme_identify_ctrl.hex", identify_ctrl_rom);
-    initial $readmemh("../ip/nvme_identify_ns.hex", identify_ns_rom);
+    initial $readmemh("nvme_identify_ctrl.hex", identify_ctrl_rom);
+    initial $readmemh("nvme_identify_ns.hex", identify_ns_rom);
 
     // ================================================================
     // COMMAND EFFECTS LOG (combinational, mostly zeros)
@@ -286,17 +286,33 @@ module pcileech_nvme_engine(
             for (i = 0; i < 16; i = i + 1)
                 sq_entry[i]     <= 32'h0;
         end else if (!ctrl_enabled) begin
-            // Controller disabled: reset queue state
-            state               <= ST_IDLE;
-            sq_head             <= 16'h0;
-            cq_tail             <= 16'h0;
-            cq_phase            <= 1'b1;
-            cpld_active         <= 1'b0;
-            aer_pending_count   <= 3'h0;
-            tx_tvalid           <= 1'b0;
-            tx_has_data         <= 1'b0;
-            io_cq_created       <= 9'h0;
-            io_sq_created       <= 9'h0;
+            // Controller disabled: reset queue state.
+            // CRITICAL: If a multi-beat TLP is in progress (mux has id=5 locked),
+            // we must send a tlast beat to release the mux. Otherwise the mux
+            // deadlocks permanently waiting for tlast that never comes.
+            if (tx_tvalid && !tx_tlast) begin
+                // Mid-packet: send a dummy tlast beat to release the mux
+                tx_tdata    <= 128'h0;
+                tx_tkeepdw  <= 4'b0000;
+                tx_tuser    <= {7'b0, 1'b1, 1'b0};  // last=1, first=0
+                tx_tlast    <= 1'b1;
+                tx_tvalid   <= 1'b1;
+                tx_has_data <= 1'b1;
+                // Stay in current state until this beat is accepted
+            end else begin
+                // No in-progress packet (or tlast already sent): safe to reset
+                state               <= ST_IDLE;
+                sq_head             <= 16'h0;
+                cq_tail             <= 16'h0;
+                cq_phase            <= 1'b1;
+                cpld_active         <= 1'b0;
+                aer_pending_count   <= 3'h0;
+                tx_tvalid           <= 1'b0;
+                tx_has_data         <= 1'b0;
+                tx_tlast            <= 1'b0;
+                io_cq_created       <= 9'h0;
+                io_sq_created       <= 9'h0;
+            end
         end else begin
 
             case (state)
@@ -315,9 +331,8 @@ module pcileech_nvme_engine(
             // FETCH_SQ: MRd 64B from ASQ (single-beat TLP)
             // ============================================================
             ST_FETCH_SQ: begin
-                if (tx_stalled) begin
-                    // hold
-                end else begin
+                if (!tx_tvalid) begin
+                    // Drive MRd TLP (single beat: first=1, last=1)
                     tx_tdata[127:96] <= {3'b001, 5'b00000, 1'b0, 3'b000, 4'b0000,
                                          1'b0, 1'b0, 2'b00, 2'b00, 10'd16};
                     tx_tdata[95:64]  <= {pcie_id, 8'hE0, 4'hF, 4'hF};
@@ -332,8 +347,14 @@ module pcileech_nvme_engine(
                     cpld_active      <= 1'b1;
                     cpld_tag_matched <= 1'b0;
                     cpld_timeout     <= 20'h0;
+                end else if (tx_beat_accepted) begin
+                    // Beat accepted by mux: deassert immediately and move on
+                    tx_tvalid        <= 1'b0;
+                    tx_has_data      <= 1'b0;
+                    tx_tlast         <= 1'b0;
                     state            <= ST_WAIT_CPLD;
                 end
+                // else: tx_stalled, hold current values
             end
 
             // ============================================================
@@ -353,13 +374,6 @@ module pcileech_nvme_engine(
             // and update cpld_dw_idx by the number of valid DWORDs.
             // ============================================================
             ST_WAIT_CPLD: begin
-                // Deassert TX once MRd is accepted
-                if (tx_beat_accepted) begin
-                    tx_tvalid   <= 1'b0;
-                    tx_has_data <= 1'b0;
-                    tx_tlast    <= 1'b0;
-                end
-
                 if (rx_tvalid && cpld_active) begin
                     if (rx_tuser[0]) begin
                         // --- First beat of a CplD packet ---

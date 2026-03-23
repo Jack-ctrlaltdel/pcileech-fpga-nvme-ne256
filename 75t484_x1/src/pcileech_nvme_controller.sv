@@ -136,7 +136,11 @@ module pcileech_nvme_controller(
                 end
 
                 SM_ENABLING: begin
-                    if (transition_counter > 0) begin
+                    if (!cc_en) begin
+                        // Host cleared CC.EN during transition: abort, go disabled
+                        reg_csts   <= 32'h0;
+                        ctrl_state <= SM_DISABLED;
+                    end else if (transition_counter > 0) begin
                         transition_counter <= transition_counter - 1;
                     end else begin
                         reg_csts[0] <= 1'b1;    // CSTS.RDY = 1
@@ -154,6 +158,8 @@ module pcileech_nvme_controller(
                     else if (cc_shn != 2'b00) begin
                         ctrl_state <= SM_SHUTDOWN;
                         transition_counter <= 16'd50;
+                        // NVMe spec: set SHST=01 (shutdown processing) immediately
+                        reg_csts <= {reg_csts[31:4], 2'b01, reg_csts[1:0]};  // SHST=01, keep RDY
                     end
                 end
 
@@ -170,7 +176,8 @@ module pcileech_nvme_controller(
                     if (transition_counter > 0) begin
                         transition_counter <= transition_counter - 1;
                     end else begin
-                        reg_csts <= 32'h0000_0008;  // SHST=10b (shutdown complete)
+                        // NVMe spec: set SHST=10 (shutdown complete), clear RDY
+                        reg_csts <= 32'h0000_0008;  // SHST=10b, RDY=0
                         // Stay in shutdown until CC.EN cleared
                         if (!cc_en) begin
                             ctrl_state <= SM_DISABLED;
