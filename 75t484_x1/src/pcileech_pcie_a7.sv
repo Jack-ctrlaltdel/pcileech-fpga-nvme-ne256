@@ -64,17 +64,39 @@ module pcileech_pcie_a7(
     wire rst_pcie_user;
     wire rst_pcie = rst || ~pcie_perst_n || dfifo_pcie.pcie_rst_core;
 
-    // Link-up gating: hold subsystem in reset until PCIe link is trained
-    // and stable. A post-link-up delay prevents the root complex from seeing
-    // responses before the endpoint is fully ready.
-    reg [7:0] lnk_up_delay = 8'hFF;
-    wire      lnk_up_stable = user_lnk_up && (lnk_up_delay == 8'h00);
+    // ================================================================
+    // LINK-UP GATING (strong version for VT-d / HVCI compatibility)
+    //
+    // Problem: With VT-d enabled, the IOMMU needs time to set up DMAR
+    // tables after link training. If the endpoint generates bus-master
+    // TLPs (DMA reads/writes) before DMAR is ready, the root complex
+    // faults and the POST freezes.
+    //
+    // Solution: 20-bit delay counter = ~16 ms holdoff at 62.5 MHz.
+    // This gives the BIOS enough time to:
+    //   1. Complete link training
+    //   2. Set up IOMMU/DMAR mappings
+    //   3. Enumerate the device and assign BARs
+    //   4. Configure ACS/ATS if applicable
+    //
+    // Two gates:
+    //   lnk_up_stable  -> feeds rst_subsys (holds entire subsystem in reset)
+    //   nvme_lnk_ready -> extra gate on NVMe engine ctrl_enabled (prevents
+    //                     bus-master DMA until fully stable)
+    // ================================================================
+    reg [19:0] lnk_up_delay = 20'hFFFFF;
+    wire       lnk_up_stable = user_lnk_up && (lnk_up_delay == 20'h00000);
     always @(posedge clk_pcie) begin
         if (!user_lnk_up)
-            lnk_up_delay <= 8'hFF;       // ~4us holdoff at 62.5 MHz
+            lnk_up_delay <= 20'hFFFFF;   // ~16 ms holdoff at 62.5 MHz
         else if (lnk_up_delay > 0)
             lnk_up_delay <= lnk_up_delay - 1;
     end
+
+    // NVMe engine enable: AND of controller CC.EN/CSTS.RDY with link stable.
+    // This prevents the engine from issuing any bus-master TLPs before the
+    // IOMMU has had time to map our device.
+    wire nvme_lnk_ready = lnk_up_stable;
 
     wire rst_subsys = rst || rst_pcie_user || dfifo_pcie.pcie_rst_subsys || ~lnk_up_stable;
        
@@ -170,7 +192,7 @@ module pcileech_pcie_a7(
         .rst                        ( rst_subsys                ),
         .clk                        ( clk_pcie                  ),
         // NVMe controller register inputs
-        .ctrl_enabled               ( nvme_ctrl_enabled         ),
+        .ctrl_enabled               ( nvme_ctrl_enabled && nvme_lnk_ready ),
         .admin_sq_base              ( nvme_admin_sq_base        ),
         .admin_cq_base              ( nvme_admin_cq_base        ),
         .admin_sq_size              ( nvme_admin_sq_size        ),
